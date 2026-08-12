@@ -45,6 +45,9 @@ applet is optional chrome — killing it never affects printing.
 > troubleshooting): **[INSTALL.md](INSTALL.md)**. Short version:
 
 ```bash
+sudo apt install git
+git clone https://github.com/ken515151/linuxprintr.git
+cd linuxprintr
 sudo bash packaging/install.sh
 sudo systemctl start syncroprintd
 ```

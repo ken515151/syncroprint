@@ -75,9 +75,11 @@ Also note your **subdomain**: if you sign in at
 
 ## Step 3 — Install SyncroPrint
 
-From this repository's folder on the counter PC:
+From a terminal on the counter PC (git isn't preinstalled on Mint, hence
+the first line):
 
 ```bash
+sudo apt install git
 git clone https://github.com/ken515151/linuxprintr.git
 cd linuxprintr
 sudo bash packaging/install.sh
