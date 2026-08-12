@@ -1,13 +1,21 @@
 # SyncroPrint for Linux
 
-Native Linux replacement for Syncro's deprecated Windows **AutoPrinter** app:
-documents generated in Syncro (tickets, invoices, receipts, labels) print on
-the shop's CUPS printers within seconds, with no Windows box involved.
+Native Linux replacement for the deprecated **AutoPrinter / AutoPrintr**
+desktop app used by **RepairShopr** and **SyncroMSP**: documents generated
+in your account (tickets, invoices, receipts, asset/ticket labels, intake
+forms) print on the shop's CUPS printers within seconds — no Windows box,
+no unmaintained legacy client.
+
+Works identically with **both products** — pick your host at setup and
+everything else is the same, because they share a backend. If you run a
+repair shop on RepairShopr with a Linux counter PC, this is aimed squarely
+at you; the vendor's official clients (Windows/macOS) have been
+unmaintained since ~2021 and are flagged as legacy.
 
 Speaks the original AutoPrintr wire protocol, extracted from RepairShopr's
 MIT-licensed clients — see [PROTOCOL.md](PROTOCOL.md) for the full write-up
 with source citations, and [NOTICE](NOTICE) for attribution.
-[MIT licensed](LICENSE). Works with both SyncroMSP and RepairShopr accounts.
+[MIT licensed](LICENSE).
 
 ## Architecture
 
@@ -55,10 +63,11 @@ sudo systemctl start syncroprintd
 Then **all setup happens in the GUI**: log out/in once (group membership),
 click the tray icon (it shows "Not set up"), open **Settings…** and:
 
-1. **Account tab** — enter your subdomain and the API token created from
-   **Admin → App Center → AutoPrinter card** in Syncro (token *type* matters —
-   a generic API token will not work). Click **Test connection**, then Save.
-   The daemon connects live; no restart needed.
+1. **Account tab** — pick your host (`syncromsp.com` or `repairshopr.com`),
+   then enter your subdomain and the API token created from
+   **Admin → App Center → AutoPrinter card** (both products have this card;
+   token *type* matters — a generic API token will not work). Click
+   **Test connection**, then Save. The daemon connects live; no restart needed.
 2. **Printers tab** — assign CUPS queues to the `a4` / `label` / `receipt`
    roles (the dropdowns list what `lpstat -a` sees).
 3. **Events tab** — enable the document types you want. Nothing prints until

@@ -4,13 +4,19 @@ Step-by-step setup for a Linux Mint (or Ubuntu-based) counter PC. Takes about
 15 minutes plus printer driver installation. No config files need editing —
 everything after the installer runs is done in the tray applet's GUI.
 
+Applies equally to **SyncroMSP and RepairShopr** accounts — the setup is
+identical apart from picking your host in Step 4. Where the guide says
+"Syncro", read it as your product.
+
 ## Before you start
 
 You'll need:
 
 - The counter PC running Linux Mint 21/22 (XFCE or Cinnamon), with sudo access.
-- Both printers connected and powered on (A4 printer + Brother QL-570).
-- A Syncro admin login (to create the AutoPrinter API token).
+- Both printers connected and powered on (A4 printer + label printer — this
+  guide uses a Brother QL-570 as the worked example).
+- An admin login for your Syncro/RepairShopr account (to create the
+  AutoPrinter API token).
 
 ## Step 1 — Set up the printers in CUPS
 
@@ -60,9 +66,11 @@ Note which media name matches the loaded roll (you'll enter it in Step 5):
 The exact media names vary by driver version — trust the `lpoptions` output
 above over this table.
 
-## Step 2 — Create the API token in Syncro
+## Step 2 — Create the API token
 
-1. Log in to Syncro as an admin.
+Same place in both products:
+
+1. Log in to Syncro/RepairShopr as an admin.
 2. Go to **Admin → App Center** and open the **AutoPrinter** card.
 3. Generate/copy the API token from that card.
 
@@ -71,7 +79,8 @@ API token (Admin → API → API Tokens) will not work, because the token *type*
 matters. Set an expiry per your security policy and diary the renewal.
 
 Also note your **subdomain**: if you sign in at
-`exampleshop.syncromsp.com`, the subdomain is `exampleshop`.
+`exampleshop.syncromsp.com` or `exampleshop.repairshopr.com`, the
+subdomain is `exampleshop`.
 
 ## Step 3 — Install SyncroPrint
 
@@ -100,7 +109,7 @@ take effect on a fresh login.
 e.g. after quitting it, or to see startup errors — run:
 `python3 /usr/lib/syncroprint/applet/syncroprint_applet.py`)
 
-## Step 4 — Connect your Syncro account (in the GUI)
+## Step 4 — Connect your account (in the GUI)
 
 After logging back in you'll see the SyncroPrint tray icon showing
 **"Not set up — open Settings"**.
