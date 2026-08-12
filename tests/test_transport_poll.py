@@ -116,3 +116,35 @@ def test_source_retired_after_401(tmp_path):
         p.sweep_once()
         assert get.call_count == 1  # no further API calls
     store.close()
+
+
+def test_concurrent_sweeps_do_not_race_on_retirement(tmp_path):
+    """Timed sweep and reconnect gap-fill can fire simultaneously; both
+    hitting a 401 must not crash on double-retiring the source."""
+    import threading
+
+    release = threading.Event()
+
+    class Blocking401Source(tpoll.RestSweepSource):
+        def fetch(self, account, since_iso):
+            release.wait(5)
+            raise PermissionError(f"{self.resource}: token not authorized (HTTP 401)")
+
+    p, store = make_poller(tmp_path, sources=[Blocking401Source("tickets", "Ticket")])
+    errors = []
+
+    def sweep():
+        try:
+            p.sweep_once()
+        except Exception as exc:   # the bug raised ValueError here
+            errors.append(exc)
+
+    threads = [threading.Thread(target=sweep) for _ in range(2)]
+    for t in threads:
+        t.start()
+    release.set()
+    for t in threads:
+        t.join(10)
+    assert errors == []
+    assert p.sources == []
+    store.close()

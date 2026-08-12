@@ -112,6 +112,9 @@ class PollerTransport:
         self._wake = threading.Event()
         self._stopping = False
         self._thread: threading.Thread | None = None
+        # sweep_once is called from the poller thread (timed) AND the Pusher
+        # thread (reconnect gap-fill); serialize so they can't interleave.
+        self._sweep_lock = threading.Lock()
 
     def start(self) -> None:
         if self.store.get_meta(CURSOR_KEY) is None:
@@ -142,6 +145,10 @@ class PollerTransport:
     def sweep_once(self) -> int:
         """One sweep from the stored cursor; returns number of jobs emitted.
         Used both by the timed loop and as the reconnect gap-fill."""
+        with self._sweep_lock:
+            return self._sweep()
+
+    def _sweep(self) -> int:
         since = self.store.get_meta(CURSOR_KEY) or _utcnow_iso()
         account = self.account_provider()
         emitted = 0
@@ -159,7 +166,8 @@ class PollerTransport:
                 log.info("%s — expected with an AutoPrinter card token; "
                          "disabling %s replay (see PROTOCOL.md §10)",
                          exc, source.resource)
-                self.sources.remove(source)
+                if source in self.sources:
+                    self.sources.remove(source)
             except (requests.RequestException, ValueError) as exc:
                 log.warning("poll sweep failed for %s: %s", source.resource, exc)
                 ok = False
