@@ -81,6 +81,19 @@ the daemon's socket). Routing keys are the canonical lowercase wire names:
 `invoice estimate ticket intakeform receipt zreport ticketreceipt popdrawer
 adjustment customerid asset ticketlabel outtakeform`.
 
+### Updating
+
+```bash
+cd linuxprintr && git pull
+sudo bash packaging/install.sh      # re-copies code; config and history are kept
+sudo systemctl restart syncroprintd
+```
+
+The daemon runs from `/usr/lib/syncroprint`, not the git checkout, so a
+`git pull` alone changes nothing until `install.sh` re-copies it and the
+service restarts. The tray applet doesn't hot-reload either: quit it from
+the tray menu and relaunch (or log out/in).
+
 ### Brother QL-570 (labels)
 
 Install Brother's official `ql570cupswrapper`/`ql570lpr` `.deb` driver so the
