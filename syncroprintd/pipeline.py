@@ -16,7 +16,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 import requests
 
@@ -353,9 +353,7 @@ class Pipeline:
             if cancel.is_set():
                 raise _Cancelled()
             try:
-                with requests.get(job.file_url, stream=True, verify=True,
-                                  headers=self.auth_headers(),
-                                  timeout=(10, self.cfg.timeouts.download_s)) as resp:
+                with self._open_download(job.file_url) as resp:
                     resp.raise_for_status()
                     ctype = resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
                     if ctype and ctype not in _ACCEPTED_CONTENT_TYPES:
@@ -379,6 +377,28 @@ class Pipeline:
                 log.warning("job %s download attempt %d failed: %s", job.id, attempt + 1, exc)
                 time.sleep(min(2 ** attempt, 8))
         raise RuntimeError(str(last_error))
+
+    def _open_download(self, url: str):
+        """GET with redirects followed manually so that EVERY hop is
+        required to be HTTPS — requests would otherwise follow a redirect
+        to a plaintext URL silently. The first hop's host is allowlist-
+        checked in validate_job; redirect targets are chosen by that
+        allowlisted vendor server over verified TLS, which is the same
+        trust we place in the bytes it serves."""
+        for _ in range(5):
+            resp = requests.get(url, stream=True, verify=True,
+                                headers=self.auth_headers(),
+                                timeout=(10, self.cfg.timeouts.download_s),
+                                allow_redirects=False)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("Location", "")
+                resp.close()
+                url = urljoin(url, location)
+                if urlsplit(url).scheme != "https":
+                    raise PayloadError("refusing redirect to non-HTTPS URL")
+                continue
+            return resp
+        raise PayloadError("too many redirects")
 
     def _pop_register(self, job: Job) -> None:
         key = self.cfg.register_printer

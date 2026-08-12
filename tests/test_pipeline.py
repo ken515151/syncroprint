@@ -30,10 +30,14 @@ class FakePrinter:
 
 
 class FakeResponse:
-    def __init__(self, body=b"%PDF-1.4 fake", content_type="application/pdf", status=200):
+    def __init__(self, body=b"%PDF-1.4 fake", content_type="application/pdf", status=200,
+                 location=None):
         self.body = body
         self.headers = {"Content-Type": content_type}
+        if location:
+            self.headers["Location"] = location
         self.status = status
+        self.status_code = status
 
     def __enter__(self):
         return self
@@ -48,6 +52,9 @@ class FakeResponse:
     def iter_content(self, chunk_size):
         for i in range(0, len(self.body), chunk_size):
             yield self.body[i:i + chunk_size]
+
+    def close(self):
+        pass
 
 
 def make_cfg(**over):
@@ -437,3 +444,41 @@ def test_resolved_copies_recorded_on_job_row(tmp_path):
         drain(p)
     assert store.get_job("50")["copies"] == 2
     assert store.get_job("51")["copies"] == 5
+
+
+def test_redirect_to_https_is_followed(tmp_path):
+    printer = FakePrinter()
+    p, store = make_pipeline(tmp_path, printer=printer)
+    hops = [FakeResponse(status=302, location="https://pdf.repairshopr.com/real.pdf"),
+            FakeResponse()]
+    with mock.patch.object(pl.requests, "get", side_effect=hops) as get:
+        p.submit(pl.Job("60", "ticket", url()))
+        drain(p)
+    assert store.get_job("60")["status"] == "printed"
+    assert get.call_count == 2
+    assert get.call_args_list[1].args[0] == "https://pdf.repairshopr.com/real.pdf"
+    assert get.call_args_list[0].kwargs["allow_redirects"] is False
+
+
+def test_redirect_to_plain_http_is_refused(tmp_path):
+    p, store = make_pipeline(tmp_path)
+    hops = [FakeResponse(status=302, location="http://pdf.repairshopr.com/real.pdf")] * 3
+    with mock.patch.object(pl.requests, "get", side_effect=hops), \
+         mock.patch.object(pl.time, "sleep"):
+        p.submit(pl.Job("61", "ticket", url()))
+        drain(p)
+    job = store.get_job("61")
+    assert job["status"] == "failed"
+    assert "non-HTTPS" in job["error"]
+
+
+def test_endless_redirects_refused(tmp_path):
+    p, store = make_pipeline(tmp_path)
+    bouncer = FakeResponse(status=302, location=url("loop.pdf"))
+    with mock.patch.object(pl.requests, "get", return_value=bouncer), \
+         mock.patch.object(pl.time, "sleep"):
+        p.submit(pl.Job("62", "ticket", url()))
+        drain(p)
+    job = store.get_job("62")
+    assert job["status"] == "failed"
+    assert "redirect" in job["error"]
