@@ -1,0 +1,15 @@
+{
+  "account": {
+    "host": "syncromsp.com",
+    "subdomain": "",
+    "api_token": ""
+  },
+  "transport": { "mode": "auto", "poll_interval_s": 60 },
+  "printers": {},
+  "routing": {},
+  "timeouts": { "download_s": 120, "print_submit_s": 30, "stuck_flag_s": 60 },
+  "retention": { "failed_spool_days": 7 },
+  "location_id": null,
+  "register_printer": null,
+  "pusher_app_key": null
+}

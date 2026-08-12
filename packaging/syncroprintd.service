@@ -1,0 +1,43 @@
+[Unit]
+Description=SyncroPrint daemon (Syncro/RepairShopr AutoPrintr protocol for CUPS)
+Documentation=file:///usr/share/doc/syncroprint/README.md
+After=network-online.target cups.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=syncroprint
+Group=syncroprint
+SupplementaryGroups=lp
+ExecStart=/usr/bin/python3 -m syncroprintd
+Environment=PYTHONPATH=/usr/lib/syncroprint
+WorkingDirectory=/var/lib/syncroprint
+Restart=on-failure
+RestartSec=5
+
+# Runtime dirs (systemd creates/chowns these)
+RuntimeDirectory=syncroprint
+RuntimeDirectoryMode=0750
+StateDirectory=syncroprint
+StateDirectoryMode=0750
+
+# Hardening (spec §5.6)
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/syncroprint /run/syncroprint /etc/syncroprint
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

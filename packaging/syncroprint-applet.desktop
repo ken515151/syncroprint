@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=SyncroPrint Applet
+Comment=Tray status and settings for the SyncroPrint daemon
+Exec=/usr/bin/python3 /usr/lib/syncroprint/applet/syncroprint_applet.py
+Icon=printer
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
