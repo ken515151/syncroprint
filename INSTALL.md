@@ -89,8 +89,8 @@ the first line):
 
 ```bash
 sudo apt install git
-git clone https://github.com/ken515151/linuxprintr.git
-cd linuxprintr
+git clone https://github.com/ken515151/syncroprint.git
+cd syncroprint
 sudo bash packaging/install.sh
 sudo systemctl start syncroprintd
 ```
@@ -186,7 +186,7 @@ Click **Save**.
 ## Updating
 
 ```bash
-cd linuxprintr && git pull
+cd syncroprint && git pull
 sudo bash packaging/install.sh     # re-copies code; config/history are kept
 sudo systemctl restart syncroprintd
 ```

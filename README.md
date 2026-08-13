@@ -54,8 +54,8 @@ applet is optional chrome — killing it never affects printing.
 
 ```bash
 sudo apt install git
-git clone https://github.com/ken515151/linuxprintr.git
-cd linuxprintr
+git clone https://github.com/ken515151/syncroprint.git
+cd syncroprint
 sudo bash packaging/install.sh
 sudo systemctl start syncroprintd
 ```
@@ -84,7 +84,7 @@ adjustment customerid asset ticketlabel outtakeform`.
 ### Updating
 
 ```bash
-cd linuxprintr && git pull
+cd syncroprint && git pull
 sudo bash packaging/install.sh      # re-copies code; config and history are kept
 sudo systemctl restart syncroprintd
 ```
@@ -138,7 +138,7 @@ ln -s /var/spool/cups-pdf/syncroprint ~/Documents/SyncroPrint-Test
 
 ```bash
 pip install pytest requests websockets
-python -m pytest tests -q        # 97 tests; includes a fake Pusher server
+python -m pytest tests -q        # 100+ tests; includes a fake Pusher server
 ```
 
 Runs and tests fine on any OS; only `lp`/`lpstat` calls and the AF_UNIX
