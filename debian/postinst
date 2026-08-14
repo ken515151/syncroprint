@@ -1,0 +1,53 @@
+#!/bin/sh
+# Mirrors packaging/install.sh system setup, and migrates installs done by
+# that script (which placed the unit in /etc/systemd/system and enabled it
+# there) so the packaged unit in /usr/lib/systemd/system takes over.
+set -e
+
+MIGRATED_FROM_SCRIPT=no
+
+if [ "$1" = "configure" ]; then
+    if ! getent passwd syncroprint >/dev/null; then
+        adduser --system --group --home /var/lib/syncroprint \
+            --no-create-home --shell /usr/sbin/nologin syncroprint
+    fi
+    getent group syncroprint >/dev/null || addgroup --system syncroprint
+    adduser syncroprint lp >/dev/null
+
+    mkdir -p /etc/syncroprint /var/lib/syncroprint/spool
+    if [ ! -f /etc/syncroprint/config.json ]; then
+        cp /usr/share/syncroprint/config.example.json /etc/syncroprint/config.json
+    fi
+    # The daemon owns its config (the applet writes it via the daemon's
+    # control socket); group syncroprint may read.
+    chown -R syncroprint:syncroprint /etc/syncroprint /var/lib/syncroprint
+    chmod 0750 /etc/syncroprint
+    chmod 0640 /etc/syncroprint/config.json
+
+    # Migration from packaging/install.sh: its unit copy in /etc shadows the
+    # packaged one until removed.
+    if [ -f /etc/systemd/system/syncroprintd.service ]; then
+        if [ -d /run/systemd/system ]; then
+            systemctl disable syncroprintd.service >/dev/null 2>&1 || true
+        fi
+        rm -f /etc/systemd/system/syncroprintd.service \
+              /etc/systemd/system/multi-user.target.wants/syncroprintd.service
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload >/dev/null 2>&1 || true
+        fi
+        MIGRATED_FROM_SCRIPT=yes
+    fi
+fi
+
+#DEBHELPER#
+
+# After a script-install migration the daemon may still be running old code
+# under the old unit definition; the debhelper snippets above only *start* on
+# fresh install. Restart if (and only if) it is running.
+if [ "$MIGRATED_FROM_SCRIPT" = yes ] && [ -d /run/systemd/system ]; then
+    systemctl try-restart syncroprintd.service >/dev/null 2>&1 || true
+    echo "syncroprint: migrated from install.sh — packaged systemd unit now in use."
+    echo "syncroprint: if ~/.config/autostart/syncroprint-applet.desktop exists, you can delete it (the package provides /etc/xdg/autostart)."
+fi
+
+exit 0

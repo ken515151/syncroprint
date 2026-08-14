@@ -7,6 +7,7 @@ printing. Requires: python3-gi, gir1.2-gtk-3.0, gir1.2-ayatanaappindicator3-0.1.
 
 from __future__ import annotations
 
+import getpass
 import sys
 import threading
 from datetime import datetime
@@ -37,6 +38,7 @@ STATE_ICONS = {
     "error":        ("dialog-error", "Error"),
     "starting":     ("printer", "Starting…"),
     "unconfigured": ("preferences-system", "Not set up — open Settings"),
+    "noaccess":     ("dialog-password", "No access to the daemon socket"),
 }
 
 DOC_TYPES = [  # canonical routing key, human title
@@ -89,12 +91,21 @@ class Applet:
             status = self.client.call("status")
             recent = self.client.call("recent_jobs", limit=10)
             GLib.idle_add(self._apply_state, status, recent, True)
+        except PermissionError:
+            # Daemon is up but this user can't open the socket — almost
+            # always a missing 'syncroprint' group membership.
+            GLib.idle_add(self._apply_state, {"state": "noaccess"}, [], False)
         except (OSError, ControlError):
             GLib.idle_add(self._apply_state, {}, [], False)
 
     def _apply_state(self, status, recent, reachable):
         self.status, self.recent, self.reachable = status, recent, reachable
-        state = status.get("state", "error") if reachable else "disconnected"
+        if reachable:
+            state = status.get("state", "error")
+        elif status.get("state") == "noaccess":
+            state = "noaccess"
+        else:
+            state = "disconnected"
         icon, text = STATE_ICONS.get(state, STATE_ICONS["error"])
         self.indicator.set_icon_full(icon, text)
         self.indicator.set_title(f"SyncroPrint — {text}" if reachable
@@ -108,11 +119,21 @@ class Applet:
         for child in self.menu.get_children():
             self.menu.remove(child)
 
-        state_item = Gtk.MenuItem(
-            label=STATE_ICONS.get(self.status.get("state", ""), ("", "Daemon unreachable"))[1]
-            if self.reachable else "Daemon unreachable")
+        if self.reachable:
+            header = STATE_ICONS.get(self.status.get("state", ""), ("", "Daemon unreachable"))[1]
+        elif self.status.get("state") == "noaccess":
+            header = STATE_ICONS["noaccess"][1]
+        else:
+            header = "Daemon unreachable"
+        state_item = Gtk.MenuItem(label=header)
         state_item.set_sensitive(False)
         self.menu.append(state_item)
+        if not self.reachable and self.status.get("state") == "noaccess":
+            for line in (f"Fix: sudo usermod -aG syncroprint {getpass.getuser()}",
+                         "then log out and back in"):
+                item = Gtk.MenuItem(label=line)
+                item.set_sensitive(False)
+                self.menu.append(item)
         self.menu.append(Gtk.SeparatorMenuItem())
 
         if self.reachable and self.status.get("state") == "unconfigured":

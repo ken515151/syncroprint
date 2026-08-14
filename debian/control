@@ -1,0 +1,30 @@
+Source: syncroprint
+Section: utils
+Priority: optional
+Maintainer: Ken Peddie <kpeddie51@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/ken515151/syncroprint
+Rules-Requires-Root: no
+
+Package: syncroprint
+Architecture: all
+Depends: ${misc:Depends},
+         python3 (>= 3.10),
+         python3-requests,
+         python3-websockets,
+         python3-gi,
+         gir1.2-gtk-3.0,
+         gir1.2-ayatanaappindicator3-0.1,
+         cups-client,
+         adduser
+Recommends: pkexec
+Description: Syncro/RepairShopr AutoPrintr client for Linux (CUPS)
+ Native Linux replacement for the deprecated AutoPrinter/AutoPrintr
+ desktop app used by RepairShopr and SyncroMSP: documents generated in
+ your account (tickets, invoices, receipts, labels, intake forms) print
+ on the shop's CUPS printers within seconds.
+ .
+ Ships a hardened systemd daemon (Pusher websocket listener with REST
+ polling fallback, PDF fetch, CUPS submission, SQLite job history) and
+ an optional GTK3 tray applet for status, history and settings.

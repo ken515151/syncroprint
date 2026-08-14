@@ -1,0 +1,6 @@
+syncroprint (0.1.0) unstable; urgency=medium
+
+  * Initial Debian packaging: same payload as packaging/install.sh, plus
+    clean upgrades, uninstall, and automatic migration from script installs.
+
+ -- Ken Peddie <kpeddie51@gmail.com>  Fri, 14 Aug 2026 12:00:00 +1200

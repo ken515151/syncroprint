@@ -1,0 +1,48 @@
+name: Release
+
+# Push a tag like v0.1.0 (matching debian/changelog and
+# syncroprintd/__init__.py) to build the .deb and attach it to a
+# GitHub Release.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build and test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq debhelper devscripts lintian
+          python3 -m pip install pytest requests websockets
+
+      - name: Run tests
+        run: python3 -m pytest tests -q
+
+      - name: Verify tag matches versions
+        run: |
+          deb_ver="$(dpkg-parsechangelog -SVersion)"
+          py_ver="$(python3 -c 'import syncroprintd; print(syncroprintd.__version__)')"
+          test "v$deb_ver" = "$GITHUB_REF_NAME" || {
+            echo "tag $GITHUB_REF_NAME != debian/changelog version $deb_ver" >&2; exit 1; }
+          test "$py_ver" = "$deb_ver" || {
+            echo "syncroprintd.__version__ $py_ver != debian/changelog version $deb_ver" >&2; exit 1; }
+
+      - name: Build .deb
+        run: |
+          dpkg-buildpackage -us -uc -b
+          lintian --fail-on error ../syncroprint_*.deb
+          mkdir dist && mv ../syncroprint_*.deb dist/
+
+      - name: Create release with .deb attached
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.deb
+          generate_release_notes: true

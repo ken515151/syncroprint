@@ -52,6 +52,20 @@ applet is optional chrome — killing it never affects printing.
 > Full step-by-step walkthrough (printer drivers, token creation,
 > troubleshooting): **[INSTALL.md](INSTALL.md)**. Short version:
 
+Download the `.deb` from the [latest release](https://github.com/ken515151/syncroprint/releases/latest), then:
+
+```bash
+sudo apt install ./syncroprint_*.deb
+sudo usermod -aG syncroprint $USER   # lets your desktop user talk to the daemon
+```
+
+The package installs its few dependencies, creates the service user, and
+enables + starts the daemon. (Installing over an existing script-based
+install migrates it automatically — config and history are kept.)
+
+<details>
+<summary>Alternative: install from a git checkout</summary>
+
 ```bash
 sudo apt install git
 git clone https://github.com/ken515151/syncroprint.git
@@ -59,6 +73,8 @@ cd syncroprint
 sudo bash packaging/install.sh
 sudo systemctl start syncroprintd
 ```
+
+</details>
 
 Then **all setup happens in the GUI**: log out/in once (group membership),
 click the tray icon (it shows "Not set up"), open **Settings…** and:
@@ -83,6 +99,14 @@ adjustment customerid asset ticketlabel outtakeform`.
 
 ### Updating
 
+Download the new `.deb` from the releases page and
+`sudo apt install ./syncroprint_*.deb` — config and history are kept and the
+daemon restarts automatically. The tray applet doesn't hot-reload: quit it
+from the tray menu and relaunch (or log out/in).
+
+<details>
+<summary>Updating a git-checkout install</summary>
+
 ```bash
 cd syncroprint && git pull
 sudo bash packaging/install.sh      # re-copies code; config and history are kept
@@ -91,8 +115,9 @@ sudo systemctl restart syncroprintd
 
 The daemon runs from `/usr/lib/syncroprint`, not the git checkout, so a
 `git pull` alone changes nothing until `install.sh` re-copies it and the
-service restarts. The tray applet doesn't hot-reload either: quit it from
-the tray menu and relaunch (or log out/in).
+service restarts.
+
+</details>
 
 ### Brother QL-570 (labels)
 
@@ -157,9 +182,15 @@ syncroprintd/      daemon package
   control.py           UNIX-socket JSON command surface + client
   config.py  store.py  api.py
 applet/            GTK3 tray applet (pure control-socket client)
-packaging/         systemd unit (hardened), installer, autostart
+packaging/         systemd unit (hardened), script installer, .deb build script
+debian/            Debian packaging (built by CI on tags, or packaging/build-deb.sh)
 tests/             unit + integration (fake Pusher WS server)
 ```
+
+Releases: push a tag `vX.Y.Z` matching `debian/changelog` and
+`syncroprintd.__version__` — CI runs the tests, builds the `.deb`, and
+attaches it to a GitHub Release. To build locally (needs Docker):
+`bash packaging/build-deb.sh` → `dist/syncroprint_X.Y.Z_all.deb`.
 
 ## Go-live checklist
 

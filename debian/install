@@ -1,0 +1,5 @@
+syncroprintd usr/lib/syncroprint
+applet usr/lib/syncroprint
+packaging/syncroprintd.service usr/lib/systemd/system
+packaging/syncroprint-applet.desktop etc/xdg/autostart
+packaging/config.example.json usr/share/syncroprint

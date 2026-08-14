@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "purge" ]; then
+    # Config (holds the API token) and job history. The syncroprint system
+    # user is deliberately left behind, per policy for system users.
+    rm -rf /etc/syncroprint /var/lib/syncroprint
+fi
+
+#DEBHELPER#
+
+exit 0

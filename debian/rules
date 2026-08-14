@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+export DH_ALWAYS_EXCLUDE = __pycache__:.pytest_cache
+
+%:
+	dh $@
+
+# The systemd unit's Documentation= line points at the uncompressed README.
+override_dh_compress:
+	dh_compress -X.md

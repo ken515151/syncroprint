@@ -84,8 +84,32 @@ subdomain is `exampleshop`.
 
 ## Step 3 — Install SyncroPrint
 
-From a terminal on the counter PC (git isn't preinstalled on Mint, hence
-the first line):
+Download the `.deb` file from the
+[latest release](https://github.com/ken515151/syncroprint/releases/latest)
+(via the browser is fine), then from a terminal:
+
+```bash
+cd ~/Downloads
+sudo apt install ./syncroprint_*.deb
+sudo usermod -aG syncroprint $USER
+```
+
+The package:
+- installs the few dependencies (python3, requests, websockets, GTK bits, cups-client),
+- creates the `syncroprint` service user and directories,
+- installs, enables and starts the hardened systemd service,
+- installs the tray applet autostart entry (all users).
+
+The `usermod` line adds your desktop user to the `syncroprint` group —
+needed to talk to the daemon; the package can't know which user sits at the
+counter, so this is the one manual step. (If you skip it, the tray icon
+will show "No access to the daemon socket" with this exact command.)
+
+Now **log out and back in** — the group change and the applet autostart only
+take effect on a fresh login.
+
+<details>
+<summary>Alternative: install from a git checkout (no .deb)</summary>
 
 ```bash
 sudo apt install git
@@ -95,15 +119,12 @@ sudo bash packaging/install.sh
 sudo systemctl start syncroprintd
 ```
 
-The installer:
-- installs the few dependencies (python3, requests, websockets, GTK bits, cups-client),
-- creates the `syncroprint` service user and directories,
-- installs and enables the hardened systemd service,
-- adds your desktop user to the `syncroprint` group (needed to talk to the daemon),
-- installs the tray applet autostart entry.
+`install.sh` does the same as the package and additionally adds the invoking
+desktop user to the `syncroprint` group for you. Installing the `.deb` later
+on the same machine migrates this install automatically (config and history
+are kept).
 
-Now **log out and back in** — the group change and the applet autostart only
-take effect on a fresh login.
+</details>
 
 (The applet then starts automatically on every login. To launch it by hand —
 e.g. after quitting it, or to see startup errors — run:
@@ -174,6 +195,7 @@ Click **Save**.
 | Symptom | Check |
 |---|---|
 | Tray icon: "Daemon unreachable" | `systemctl status syncroprintd`; did you log out/in after install (group membership)? |
+| Tray icon: "No access to the daemon socket" | Your user isn't in the `syncroprint` group — the tray menu shows the exact `usermod` command; run it, then log out/in |
 | Test connection fails with auth error | Token must be from the **AutoPrinter App Center card**, not a generic API token |
 | Icon stuck on "Degraded (polling)" | Realtime blocked — check firewall allows outbound 443 to `ws-mt1.pusher.com` / `ws.pusherapp.com` |
 | Jobs show `skipped` in History | That document type isn't Enabled in the Events tab (or Auto Print is off for an automated job) — this is the day-1 default |
@@ -185,6 +207,19 @@ Click **Save**.
 
 ## Updating
 
+Download the new `.deb` from the releases page, then:
+
+```bash
+sudo apt install ./syncroprint_*.deb
+```
+
+Config and history are kept; the daemon restarts automatically. The applet
+doesn't hot-reload: tray menu → **Quit applet**, then relaunch it (or log
+out/in).
+
+<details>
+<summary>Updating a git-checkout install</summary>
+
 ```bash
 cd syncroprint && git pull
 sudo bash packaging/install.sh     # re-copies code; config/history are kept
@@ -193,10 +228,19 @@ sudo systemctl restart syncroprintd
 
 The daemon runs from `/usr/lib/syncroprint`, not the git checkout — a
 `git pull` alone changes nothing until `install.sh` re-copies and the
-service restarts. The applet doesn't hot-reload either: tray menu →
-**Quit applet**, then relaunch it (or log out/in).
+service restarts.
+
+</details>
 
 ## Uninstalling
+
+```bash
+sudo apt remove syncroprint      # keeps config + history
+sudo apt purge syncroprint       # removes config + history too
+```
+
+<details>
+<summary>Uninstalling a git-checkout (install.sh) install</summary>
 
 ```bash
 sudo systemctl disable --now syncroprintd
@@ -205,3 +249,5 @@ sudo rm -rf /etc/syncroprint /var/lib/syncroprint   # config + history — omit 
 rm ~/.config/autostart/syncroprint-applet.desktop
 sudo userdel syncroprint
 ```
+
+</details>
