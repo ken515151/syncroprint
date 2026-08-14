@@ -119,6 +119,16 @@ service restarts.
 
 </details>
 
+### Uninstalling
+
+```bash
+sudo apt remove syncroprint      # keeps config + history
+sudo apt purge syncroprint       # removes config + history too
+```
+
+(For a git-checkout install there is no package to remove — see the manual
+steps in [INSTALL.md](INSTALL.md#uninstalling).)
+
 ### Brother QL-570 (labels)
 
 Install Brother's official `ql570cupswrapper`/`ql570lpr` `.deb` driver so the
