@@ -20,7 +20,7 @@ jobs:
       - name: Install build and test dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq debhelper devscripts lintian
+          sudo apt-get install -y -qq build-essential debhelper devscripts lintian
           python3 -m pip install pytest requests websockets
 
       - name: Run tests
